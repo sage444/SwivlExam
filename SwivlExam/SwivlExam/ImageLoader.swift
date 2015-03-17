@@ -60,7 +60,7 @@ class ImageLoader: NSObject, NSURLSessionTaskDelegate, NSURLSessionDelegate, NSU
         }
         if let delegate = completed {
             if delegate.data != nil &&  error == nil {
-                let image = UIImage(data: delegate.data!)
+                let image = UIImage(data: delegate.data!, scale:UIScreen.mainScreen().scale)
                 delegate.handler(image:image , url: delegate.task?.originalRequest.URL.absoluteString)
             }else {
                 delegate.handler(image: nil, url:delegate.task?.originalRequest.URL.absoluteString)
@@ -96,7 +96,7 @@ extension ImageLoader {
             
             let request = NSURLRequest(URL: imgUrl)
             if let response = _imageCache.cachedResponseForRequest(request) {
-                let image = UIImage(data: response.data)
+                let image = UIImage(data: response.data, scale:UIScreen.mainScreen().scale)
                 handler(image: nil, url:path)
             }
             
