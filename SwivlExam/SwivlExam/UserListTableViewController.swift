@@ -11,7 +11,7 @@ import UIKit
 class UserListTableViewController: UITableViewController, UserAvatarClickProtocol {
 
     var _userList:[User] = []
-    
+    var _selectedUser: User?
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -28,15 +28,32 @@ class UserListTableViewController: UITableViewController, UserAvatarClickProtoco
                 self.title = "GitHub Users"
                 self._userList = data as [User]
                 self.tableView.reloadData()
-                activityIndicator.startAnimating()
                 self.tableView.separatorStyle = UITableViewCellSeparatorStyle.SingleLine
+                activityIndicator.stopAnimating()
                 activityIndicator.removeFromSuperview()
             }
         })
     }
     
+    
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        super.prepareForSegue(segue, sender: sender)
+        
+        
+        switch segue.identifier! {
+        case "showUserAvatarSeque":
+            (segue.destinationViewController as ImageViewerViewController).userData = _selectedUser
+
+        default:
+            println("")
+        }
+        
+        
+    }
+    
     func clickOn(user: User) {
-        println("clicked on:\(user)")
+        _selectedUser = user
+        performSegueWithIdentifier("showUserAvatarSeque", sender: self)
     }
 }
 
