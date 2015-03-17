@@ -28,8 +28,8 @@ class UserListTableViewController: UITableViewController, UserAvatarClickProtoco
                 self.title = "GitHub Users"
                 self._userList = data as [User]
                 self.tableView.reloadData()
-                activityIndicator.startAnimating()
                 self.tableView.separatorStyle = UITableViewCellSeparatorStyle.SingleLine
+                activityIndicator.stopAnimating()
                 activityIndicator.removeFromSuperview()
             }
         })

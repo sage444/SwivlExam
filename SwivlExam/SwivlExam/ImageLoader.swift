@@ -13,13 +13,11 @@ typealias ImageLoadCompleted = (image:UIImage?, url:String?) -> Void
 class TaskDelegateAndStorage: NSObject {
     weak var imageView: UIImageView?
     var data: NSMutableData?
-    let url: NSString
     let task: NSURLSessionDataTask?
     let handler: ImageLoadCompleted
     
-    init (url:NSString, task:NSURLSessionDataTask, handler:ImageLoadCompleted) {
+    init (task:NSURLSessionDataTask, handler:ImageLoadCompleted) {
         self.handler = handler
-        self.url = url
         super.init()
         self.task = task
     }
@@ -34,16 +32,17 @@ class ImageLoader: NSObject, NSURLSessionTaskDelegate, NSURLSessionDelegate, NSU
         return Static.instance
     }
     
-    private var _imageSession: NSURLSession!
+    private let _imageSession: NSURLSession!
+    private let _imageCache: NSURLCache
     
     private var _taskAndHandlers: [TaskDelegateAndStorage!] = []
     
     override init() {
+        _imageCache = NSURLCache(memoryCapacity: 20*1024*1024, diskCapacity: 100*1024*1024, diskPath: "swl_imageCache")
         super.init()
-        
-        let imageCache = NSURLCache(memoryCapacity: 20*1024*1024, diskCapacity: 100*1024*1024, diskPath: "swl_imageCache")
+
         let imageSessionConfig = NSURLSessionConfiguration.defaultSessionConfiguration()
-        imageSessionConfig.URLCache = imageCache
+        imageSessionConfig.URLCache = _imageCache
         imageSessionConfig.HTTPShouldUsePipelining = true;
         _imageSession = NSURLSession(configuration:imageSessionConfig , delegate: self, delegateQueue: NSOperationQueue.mainQueue())
         _imageSession.sessionDescription = NSBundle.mainBundle().bundleIdentifier! + "image_download_session"
@@ -94,6 +93,13 @@ extension ImageLoader {
         cancelTaskForView(view)
         
         if let imgUrl = NSURL(string: path) {
+            
+            let request = NSURLRequest(URL: imgUrl)
+            if let response = _imageCache.cachedResponseForRequest(request) {
+                let image = UIImage(data: response.data)
+                handler(image: nil, url:path)
+            }
+            
             if let task = imageLoadingTask(path, view:view, handler: handler) {
                 task.resume()
             } else {
@@ -108,7 +114,7 @@ extension ImageLoader {
         if let imgUrl = NSURL(string: path) {
             
             let task = _imageSession.dataTaskWithURL(imgUrl)
-            let newTaskDelegate = TaskDelegateAndStorage(url:path, task: task, handler: handler)
+            let newTaskDelegate = TaskDelegateAndStorage(task: task, handler: handler)
             newTaskDelegate.imageView = view
             _taskAndHandlers.append(newTaskDelegate)
 
